@@ -12,11 +12,14 @@
 
 using namespace std;
 
+// Initialize ROS
 ros::Publisher pub;
 
 void 
 cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 {
+	ros::Time start, stop;	
+	start = ros::Time::now();
 	// Convert the sensor_msgs/PointCloud2 data to pcl/PointCloud
 	pcl::PointCloud<pcl::PointXYZ> cloud;
 	pcl::fromROSMsg (*input, cloud);
@@ -38,6 +41,9 @@ cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 	// output number of points found on a surface
 	cout << inliers->indices.size() << " points were mapped to a planar surface" << endl;
 
+	stop = ros::Time::now();
+	cout << (stop.toNSec()-start.toNSec())/1000000 << endl;
+
 	// Publish the model coefficients
 	pub.publish (coefficients);
 }
@@ -45,10 +51,8 @@ cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 int
 main (int argc, char** argv)
 {
-	// Initialize ROS
 	ros::init (argc, argv, "segment");
 	ros::NodeHandle nh;
-
 	// Create a ROS subscriber for the input point cloud
 	ros::Subscriber sub = nh.subscribe ("pointcloud", 1, cloud_cb);
 	

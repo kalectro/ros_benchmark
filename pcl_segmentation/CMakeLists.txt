@@ -16,5 +16,7 @@ include_directories(include
 )
 
 add_executable(pcl_segmentation src/segment.cpp)
+add_executable(create_pointcloud src/create_pointcloud.cpp)
 
 target_link_libraries(pcl_segmentation ${catkin_LIBRARIES})
+target_link_libraries(create_pointcloud ${catkin_LIBRARIES})
