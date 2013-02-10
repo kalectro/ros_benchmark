@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package>
+  <name>feature_detection</name>
+  <version>0.0.2</version>
+  <description>Benchmark different feature detectors and descriptors</description>
+
+  <maintainer email="kai@kaifranke.com">Kai Franke</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>cv_bridge</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>rostime</build_depend>
+  <build_depend>roslib</build_depend>
+
+  <run_depend>cv_bridge</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>rostime</run_depend>
+  <run_depend>roslib</run_depend>
+
+</package>

@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package>
+	<name>image_benchmark</name>
+	<version>0.0.1</version>
+	<description>Benchmark the throughput for different embedded systems</description>
+
+	<maintainer email="kai@kaifranke.com">Kai Franke</maintainer>
+	<license>BSD</license>
+
+	<run_depend>feature_detection</run_depend>
+	<run_depend>rosinit</run_depend>
+	<run_depend>image_transmission</run_depend>
+	<run_depend>pcl_segmentation</run_depend>
+
+	<export>
+	<metapackage/> 
+	</export>
+
+</package>
