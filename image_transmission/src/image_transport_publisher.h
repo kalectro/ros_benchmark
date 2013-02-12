@@ -17,7 +17,7 @@
 
 using namespace std;
 // Parameters used if not available on parameter server
-static const string IMAGE_PATH = "src/image_benchmark/images/rgb.jpg";
+static const string IMAGE_PATH = "src/ros_benchmark/image_transmission/images/VGA.jpg";
 
 int main(int, char**);
 
