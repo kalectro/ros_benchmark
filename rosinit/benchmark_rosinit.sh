@@ -10,5 +10,5 @@ i=`echo "$i + 1" | bc`
 done
 echo "init;nodeHandle;param" >> $filename
 for i in `seq 1 10`
-	do rosrun rosinit rosinit_benchmark_node _testparam=true >> $filename
+	do rosrun rosinit rosinit _testparam=true >> $filename
 done
