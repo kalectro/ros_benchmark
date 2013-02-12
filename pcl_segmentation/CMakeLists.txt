@@ -20,3 +20,8 @@ add_executable(create_pointcloud src/create_pointcloud.cpp)
 
 target_link_libraries(pcl_segmentation ${catkin_LIBRARIES})
 target_link_libraries(create_pointcloud ${catkin_LIBRARIES})
+
+install(TARGETS pcl_segmentation create_pointcloud 
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})

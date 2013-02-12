@@ -14,3 +14,7 @@ add_executable(image_subscriber src/image_transport_subscriber.cpp)
 target_link_libraries(image_transmitter ${catkin_LIBRARIES})
 target_link_libraries(image_subscriber ${catkin_LIBRARIES})
 
+install(TARGETS image_transmitter image_subscriber 
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})

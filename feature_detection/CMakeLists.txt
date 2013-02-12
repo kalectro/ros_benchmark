@@ -12,3 +12,7 @@ add_executable(feature_detection_node src/feature_detection.cpp)
 
 target_link_libraries(feature_detection_node ${catkin_LIBRARIES})
 
+install(TARGETS feature_detection_node 
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
