@@ -12,7 +12,7 @@ i=`echo "$i + 1" | bc`
 done
 for j in SURF BRISK ORB FAST SIFT
 	do for i in SURF SIFT BRISK FREAK ORB BRIEF
-		do rosrun image_benchmark feature_detection_node _detector_type:=$j _extractor_type:=$i _image_path:=$1 _repetitions:=1 _verbosity:=$verbose >> $filename
+		do rosrun feature_detection feature_detection_node _detector_type:=$j _extractor_type:=$i _image_path:=$1 _repetitions:=1 _verbosity:=$verbose >> $filename
 		verbose=false;
 	done
 done
