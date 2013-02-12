@@ -38,12 +38,12 @@ cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 	seg.setInputCloud (cloud.makeShared ());
 	seg.segment (*inliers, *coefficients);
 
-	// output number of points found on a surface
-	cout << inliers->indices.size() << " points were mapped to a planar surface" << endl;
-
 	stop = ros::Time::now();
-	cout << (stop.toNSec()-start.toNSec())/1000000 << endl;
-
+	cout << (stop.toNSec()-start.toNSec())/1000000 << ';' ;
+	
+	// output number of points found on a surface
+	cout << inliers->indices.size() << endl;
+	
 	// Publish the model coefficients
 	pub.publish (coefficients);
 }
@@ -59,6 +59,9 @@ main (int argc, char** argv)
 	// Create a ROS publisher for the output model coefficients
 	pub = nh.advertise<pcl::ModelCoefficients> ("coefficients", 1);
 
+	// Write description for csv file	
+	cout << "time[ms];matching points" << endl;
+	
 	// Spin
 	ros::spin ();
 }
