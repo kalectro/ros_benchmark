@@ -10,25 +10,26 @@
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/extract_indices.h>
-#include <pcl/impl/point_types.hpp>
 
 using namespace std;
 
 // Initialize ROS
 ros::Publisher pub;
 
-// Convert the sensor_msgs/PointCloud2 data to pcl/PointCloud
-pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
+// construct point cloud to work with
+pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+
+// construct coefficients
 pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
+
+// constructor for point found as part of planar surface
 pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
-
-// Create the filtering object
-pcl::ExtractIndices<pcl::PointXYZ> extract;
-
-//pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZ>);
 
 // Create the segmentation object
 pcl::SACSegmentation<pcl::PointXYZ> seg;
+
+// Create the filtering object
+pcl::ExtractIndices<pcl::PointXYZ> extract;
 
 void 
 cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
@@ -42,13 +43,14 @@ cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 	stop = ros::Time::now();
 	cout << (stop.toNSec()-start.toNSec())/1000000 << ';' ;
 
-	// measure time segment pointcloud
+	// measure time to find biggest planar surface
 	start = ros::Time::now();
+	seg.setInputCloud (cloud);
 	seg.segment (*inliers, *coefficients);
 	stop = ros::Time::now();
 	cout << (stop.toNSec()-start.toNSec())/1000000 << ';' ;
 	
-	// measure time for making input cloud accessible
+	// measure time for overwriting filtered values
 	start = ros::Time::now();
 	extract.setIndices (inliers);
 	extract.filterDirectly (cloud);
@@ -57,9 +59,6 @@ cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 
 	// output number of points found on a surface
 	cout << inliers->indices.size() << endl;
-	
-	// Publish the model coefficients
-	pub.publish (coefficients);
 }
 
 int
@@ -69,9 +68,6 @@ main (int argc, char** argv)
 	ros::NodeHandle nh;
 	// Create a ROS subscriber for the input point cloud
 	ros::Subscriber sub = nh.subscribe ("pointcloud", 1, cloud_cb);
-	
-	// Create a ROS publisher for the output model coefficients
-	pub = nh.advertise<pcl::ModelCoefficients> ("coefficients", 1);
 
 	// Set up SAC parameters
 	seg.setOptimizeCoefficients (true);
@@ -83,7 +79,6 @@ main (int argc, char** argv)
 	seg.setMaxIterations (1000);
 	
 	// Extract the outliers (not the planar surface)
-	extract.setIndices (inliers);
 	extract.setNegative (false);
 
 	// Write description for csv file	
