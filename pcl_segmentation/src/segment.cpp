@@ -31,6 +31,9 @@ pcl::SACSegmentation<pcl::PointXYZ> seg;
 // Create the filtering object
 pcl::ExtractIndices<pcl::PointXYZ> extract;
 
+// Create writer to write PCD files
+pcl::PCDWriter writer;
+
 void 
 cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 {
@@ -59,6 +62,8 @@ cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 
 	// output number of points found on a surface
 	cout << inliers->indices.size() << endl;
+
+	writer.write<pcl::PointXYZ> ("no_table.pcd", *cloud, false);
 }
 
 int
@@ -74,12 +79,12 @@ main (int argc, char** argv)
 	seg.setModelType (pcl::SACMODEL_PLANE);
 	seg.setMethodType (pcl::SAC_RANSAC);
 	// maximal distance from point to planar surface to be identified as plane (1cm???)
-	seg.setDistanceThreshold (0.01);
+	seg.setDistanceThreshold (0.05);
 	// limit maximum computation time
 	seg.setMaxIterations (1000);
 	
 	// Extract the outliers (not the planar surface)
-	extract.setNegative (false);
+	extract.setNegative (true);
 
 	// Write description for csv file	
 	cout << "time[ms];matching points" << endl;
