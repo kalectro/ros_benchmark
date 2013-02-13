@@ -4,6 +4,7 @@
 #include <iostream>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
+#include <pcl/filters/passthrough.h>
 
 using namespace std;
 
@@ -20,12 +21,13 @@ main (int argc, char** argv)
 	ros::init (argc, argv, "create_pointcloud");
 	ros::NodeHandle nh;
 
-	ros::Rate loop_rate(0.1);
+	ros::Rate loop_rate(0.5);
 	
 	// Create a ROS publisher for the output model coefficients
 	pub = nh.advertise<sensor_msgs::PointCloud2> ("pointcloud", 1);
 
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+	//pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+	sensor_msgs::PointCloud2 cloud;	
 
 	while (ros::ok())
 	{
@@ -41,18 +43,18 @@ main (int argc, char** argv)
 		}
 
 		// load the pcd
-		if (pcl::io::loadPCDFile<pcl::PointXYZ> (pcd_path, *cloud) == -1) 
+		if (pcl::io::loadPCDFile (pcd_path, cloud) == -1) 
 		{
 			PCL_ERROR ("Couldn't read file %s \n", pcd_path.c_str());
 			return (-1);
 		}
 
 		// Convert the sensor_msgs/PointCloud2 data to pcl/PointCloud
-		sensor_msgs::PointCloud2 output;
-		pcl::toROSMsg (*cloud, output);
+		//sensor_msgs::PointCloud2 output;
+		// pcl::toROSMsg (*cloud, output);
 
 		// Publish the model coefficients
-		pub.publish (output);
+		pub.publish (cloud);
 
 		// Spin
 		ros::spinOnce ();
