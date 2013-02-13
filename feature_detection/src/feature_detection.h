@@ -21,4 +21,4 @@ using namespace std;
 using namespace cv;
 
 // Parameters used if not available on parameter server
-static const string IMAGE_PATH = "src/image_benchmark/images/VGA1.jpg";
+static const string IMAGE_PATH = "src/ros_benchmark/feature_detection/images/VGA1.jpg";
