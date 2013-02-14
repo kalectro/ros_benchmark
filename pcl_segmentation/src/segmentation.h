@@ -19,12 +19,19 @@
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/passthrough.h>
 
+// define enum for duration function
+enum { STOP, START };
+
 void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input);
 
 int main(int, char**);
+inline void duration(bool identifier);
 
 // if true, node will write pcd file with largest plane removed to disk
 bool verbosity;
+
+// declare timing variables
+ros::Time start, stop;
 
 // Initialize Subscriber
 ros::Subscriber sub;

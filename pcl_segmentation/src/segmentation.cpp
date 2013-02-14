@@ -57,16 +57,35 @@ int main (int argc, char** argv)
 	ros::spin ();
 }
 
+inline void duration(bool identifier)
+{
+	// 0 = STOP ; 1= START
+	// start timer if START
+	// stop and print timer if STOP
+	if(identifier)
+		start = ros::Time::now();
+	else
+	{
+		stop = ros::Time::now();
+		cout << (stop.toNSec()-start.toNSec())/1000000 << ';' ;
+	}
+}	
 
 void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 {
 	ros::NodeHandle nh;
 	// get limits for filtering
-	nh.param<double>("/segment/z_min_distance", z_min, 0.5);
-	nh.param<double>("/segment/z_max_distance", z_max, 1.5);
-
-	// declare timing variables
-	ros::Time start, stop;	
+	do
+	{
+		nh.param<double>("/segment/z_min_distance", z_min, 0.5);
+		nh.param<double>("/segment/z_max_distance", z_max, 1.5);
+		// check if range is defined correctly
+		if(z_max-z_min <= 0)
+		{
+			ROS_WARN("Please make sure the parameter /segment/z_min_distance is smaller than /segment/z_max_distance");
+			return;
+		}
+	}while(z_max-z_min <= 0);
 
 	pt.setInputCloud(input);
 	pt.setKeepOrganized(false);
@@ -74,36 +93,36 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 	pt.setFilterLimits(z_min, z_max);
 
 	// measure time for filtering the points
-	start = ros::Time::now();
+	duration(START);
 	pt.filter(input_filtered);
-	stop = ros::Time::now();
-	cout << (stop.toNSec()-start.toNSec())/1000000 << ';' ;
+	duration(STOP);
+	
 
 	// measure time for converting the message
-	start = ros::Time::now();
+	duration(START);
 	pcl::fromROSMsg (input_filtered, *cloud);
-	stop = ros::Time::now();
-	cout << (stop.toNSec()-start.toNSec())/1000000 << ';' ;
+	duration(STOP);
 
 	// measure time to find biggest planar surface
-	start = ros::Time::now();
+	duration(START);
 	seg.setInputCloud (cloud);
 	seg.segment (*inliers, *coefficients);
-	stop = ros::Time::now();
-	cout << (stop.toNSec()-start.toNSec())/1000000 << ';' ;
+	duration(STOP);
 	
 	// measure time for overwriting filtered values
-	start = ros::Time::now();
+	duration(START);
 	extract.setIndices (inliers);
 	extract.filterDirectly (cloud);
-	stop = ros::Time::now();
-	cout << (stop.toNSec()-start.toNSec())/1000000 << ';' ;
+	duration(STOP);
+
+	// write pcd file if verbose = true & measure time
+	duration(START);
+	if (verbosity)
+		writer.write<pcl::PointXYZ> ("plane_removed.pcd", *cloud, false);
+	duration(STOP);
 
 	// output number of points found on a surface
 	cout << inliers->indices.size() << endl;
 
-	// write pcd file if verbose = true
-	if (verbosity)
-		writer.write<pcl::PointXYZ> ("plane_removed.pcd", *cloud, false);
 }
 
