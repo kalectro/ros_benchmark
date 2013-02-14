@@ -26,7 +26,7 @@ main (int argc, char** argv)
 	// Create a ROS publisher for the output model coefficients
 	pub = nh.advertise<sensor_msgs::PointCloud2> ("pointcloud", 1);
 
-	//pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+	// Create ROS message to publish the point cloud
 	sensor_msgs::PointCloud2 cloud;	
 
 	while (ros::ok())
@@ -48,10 +48,6 @@ main (int argc, char** argv)
 			PCL_ERROR ("Couldn't read file %s \n", pcd_path.c_str());
 			return (-1);
 		}
-
-		// Convert the sensor_msgs/PointCloud2 data to pcl/PointCloud
-		//sensor_msgs::PointCloud2 output;
-		// pcl::toROSMsg (*cloud, output);
 
 		// Publish the model coefficients
 		pub.publish (cloud);

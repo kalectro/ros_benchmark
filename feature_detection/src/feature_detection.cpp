@@ -2,7 +2,7 @@
  * Simple Feature detection for benchmarking purpose
  *
  *  Created on: Jan 15, 2013
- *      Author: frk1pal
+ *      Author: Kai Franke
  */
 
 
