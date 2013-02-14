@@ -28,7 +28,7 @@ int main(int, char**);
 inline void duration(bool identifier);
 
 // if true, node will write pcd file with largest plane removed to disk
-bool verbosity;
+bool output_pcd;
 
 // declare timing variables
 ros::Time start, stop;

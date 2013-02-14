@@ -36,7 +36,8 @@ int main (int argc, char** argv)
 	sub = nh.subscribe ("pointcloud", 1, cloud_cb);
 
 	// Write description for csv file	
-	cout << "time[ms];matching points" << endl;
+	cout << "All time values measured in milli seconds" << endl;
+	cout << "filter_z;ROS2PC;segment_plane;update_PC;write_output;points_on_plane" << endl;
 
 	// Set up SAC parameters
 	seg.setOptimizeCoefficients (true);
@@ -51,7 +52,7 @@ int main (int argc, char** argv)
 	extract.setNegative (true);
 
 	// get verbosity for pcd output
-	nh_param.param<bool>("verbosity", verbosity, false);
+	nh_param.param<bool>("output_pcd", output_pcd, false);
 	
 	// Spin
 	ros::spin ();
@@ -73,35 +74,52 @@ inline void duration(bool identifier)
 
 void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 {
+	// make node handle available for retrieving parameters
 	ros::NodeHandle nh;
-	// get limits for filtering
-	do
-	{
-		nh.param<double>("/segment/z_min_distance", z_min, 0.5);
-		nh.param<double>("/segment/z_max_distance", z_max, 1.5);
-		// check if range is defined correctly
-		if(z_max-z_min <= 0)
-		{
-			ROS_WARN("Please make sure the parameter /segment/z_min_distance is smaller than /segment/z_max_distance");
-			return;
-		}
-	}while(z_max-z_min <= 0);
-
-	pt.setInputCloud(input);
-	pt.setKeepOrganized(false);
-	pt.setFilterFieldName("z");
-	pt.setFilterLimits(z_min, z_max);
 
 	// measure time for filtering the points
-	duration(START);
-	pt.filter(input_filtered);
-	duration(STOP);
-	
+	// check if parameters for limiting z value exists
+	if (nh.hasParam("/segment/z_min_distance") && nh.hasParam("/segment/z_max_distance"))
+	{
+		// get limits for filtering
+		do
+		{
+			nh.getParam("/segment/z_min_distance", z_min);
+			nh.getParam("/segment/z_max_distance", z_max);
+			// check if range is defined correctly
+			if(z_max-z_min <= 0)
+			{
+				ROS_WARN("Please make sure the parameter /segment/z_min_distance is smaller than /segment/z_max_distance");
+				return;
+			}
+		}while(z_max-z_min <= 0);
 
-	// measure time for converting the message
-	duration(START);
-	pcl::fromROSMsg (input_filtered, *cloud);
-	duration(STOP);
+		// set parameters for z axis filtering
+		pt.setInputCloud(input);
+		pt.setKeepOrganized(false);
+		pt.setFilterFieldName("z");
+		pt.setFilterLimits(z_min, z_max);
+
+		// reset timer to measure only the filtering
+		duration(START);
+		pt.filter(input_filtered);
+		duration(STOP);
+
+		// measure time for converting the message
+		duration(START);
+		pcl::fromROSMsg (input_filtered, *cloud);
+		duration(STOP);
+	}
+	else
+	{
+		// do not measure time but also do not destroy csv
+		cout <<';';
+		
+		// measure time for converting the message
+		duration(START);
+		pcl::fromROSMsg (*input, *cloud);
+		duration(STOP);
+	}
 
 	// measure time to find biggest planar surface
 	duration(START);
@@ -116,10 +134,14 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 	duration(STOP);
 
 	// write pcd file if verbose = true & measure time
-	duration(START);
-	if (verbosity)
+	if (output_pcd)
+	{
+		duration(START);
 		writer.write<pcl::PointXYZ> ("plane_removed.pcd", *cloud, false);
-	duration(STOP);
+		duration(STOP);
+	}
+	else
+		cout <<';';
 
 	// output number of points found on a surface
 	cout << inliers->indices.size() << endl;
