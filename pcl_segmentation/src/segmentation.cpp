@@ -58,7 +58,7 @@ int main (int argc, char** argv)
 	ros::spin ();
 }
 
-inline void duration(bool identifier)
+void duration(bool identifier)
 {
 	// 0 = STOP ; 1= START
 	// start timer if START
@@ -86,6 +86,7 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 		{
 			nh.getParam("/segment/z_min_distance", z_min);
 			nh.getParam("/segment/z_max_distance", z_max);
+			nh.param("/segment/keep_organized", keep_organized, false);
 			// check if range is defined correctly
 			if(z_max-z_min <= 0)
 			{

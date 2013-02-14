@@ -30,6 +30,9 @@ inline void duration(bool identifier);
 // if true, node will write pcd file with largest plane removed to disk
 bool output_pcd;
 
+// if true filtered points will be removed from the point cloud, if false overwritten by NaN
+bool keep_organized;
+
 // declare timing variables
 ros::Time start, stop;
 
