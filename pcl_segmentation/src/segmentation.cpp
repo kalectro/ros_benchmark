@@ -97,7 +97,7 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 
 		// set parameters for z axis filtering
 		pt.setInputCloud(input);
-		pt.setKeepOrganized(false);
+		pt.setKeepOrganized(keep_organized);
 		pt.setFilterFieldName("z");
 		pt.setFilterLimits(z_min, z_max);
 
