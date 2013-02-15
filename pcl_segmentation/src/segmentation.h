@@ -18,6 +18,7 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/passthrough.h>
+#include <pcl/features/normal_3d.h>
 
 // define enum for duration function
 enum { STOP, START };

@@ -5,11 +5,20 @@ using namespace std;
 // Construct point cloud to work with
 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
 
-// construct coefficients
-pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
+// Construct point cloud after plane removal
+pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_no_plane (new pcl::PointCloud<pcl::PointXYZ>);
+
+// construct coefficients for plane
+pcl::ModelCoefficients::Ptr coefficients_plane (new pcl::ModelCoefficients);
+
+// construct coefficients for cylinder
+pcl::ModelCoefficients::Ptr coefficients_cylinder (new pcl::ModelCoefficients);
 
 // constructor for point found as part of planar surface
-pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+pcl::PointIndices::Ptr inliers_plane (new pcl::PointIndices);
+
+// constructor for point found as part of cylinder
+pcl::PointIndices::Ptr inliers_cylinder (new pcl::PointIndices);
 
 // Create pass through point cloud for point filtering
 pcl::PassThrough<sensor_msgs::PointCloud2> pt(false);
@@ -17,11 +26,26 @@ pcl::PassThrough<sensor_msgs::PointCloud2> pt(false);
 // Create ROS message for filtered point cloud
 sensor_msgs::PointCloud2 input_filtered;
 
-// Declare the segmentation object
-pcl::SACSegmentation<pcl::PointXYZ> seg;
+// Declare the segmentation object for planes
+pcl::SACSegmentation<pcl::PointXYZ> seg_plane;
 
-// Declare the filtering object
-pcl::ExtractIndices<pcl::PointXYZ> extract;
+// Declare the segmentation object for cylinders
+pcl::SACSegmentationFromNormals<pcl::PointXYZ, pcl::Normal> seg_cylinder;
+
+// Declare the filtering object for planes
+pcl::ExtractIndices<pcl::PointXYZ> extract_planes;
+
+// Declare the filtering object for cylinders
+pcl::ExtractIndices<pcl::PointXYZ> extract_cylinders;
+
+// Declare variable for normal estimation
+pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
+
+// Create the cloud normals needed for cylinder segmentation
+pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
+
+// Create KdTree needed for normal estimation
+pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ> ());
 
 // Declare writer to write PCD files
 pcl::PCDWriter writer;
@@ -29,7 +53,7 @@ pcl::PCDWriter writer;
 
 int main (int argc, char** argv)
 {
-	ros::init (argc, argv, "plane_segmentation");
+	ros::init (argc, argv, "object_recognition");
 	ros::NodeHandle nh;
 	ros::NodeHandle nh_param("~");
 	// Create a ROS subscriber for the input point cloud
@@ -38,18 +62,33 @@ int main (int argc, char** argv)
 	// Write description for csv file	
 	cout << "All time values measured in milli seconds" << endl;
 	cout << "filter_z;ROS2PC;segment_plane;update_PC;write_output;points_on_plane" << endl;
-
-	// Set up SAC parameters
-	seg.setOptimizeCoefficients (true);
-	seg.setModelType (pcl::SACMODEL_PLANE);
-	seg.setMethodType (pcl::SAC_RANSAC);
-	// maximal distance from point to planar surface to be identified as plane (1cm???)
-	seg.setDistanceThreshold (0.02);
-	// limit maximum computation time
-	seg.setMaxIterations (1000);
 	
-	// Extract the outliers (not the planar surface)
-	extract.setNegative (true);
+	// Set up SAC parameters for plane segmentation
+	seg_plane.setOptimizeCoefficients (true);
+	seg_plane.setModelType (pcl::SACMODEL_PLANE);
+	seg_plane.setMethodType (pcl::SAC_RANSAC);
+	// maximal distance from point to planar surface to be identified as plane (2cm???)
+	seg_plane.setDistanceThreshold (0.02);
+	// limit maximum computation time
+	seg_plane.setMaxIterations (1000);
+
+	// Set up SAC parameters for cylinder segmentation
+	seg_cylinder.setOptimizeCoefficients (true);
+	seg_cylinder.setModelType (pcl::SACMODEL_CYLINDER);
+	seg_cylinder.setMethodType (pcl::SAC_RANSAC);
+	seg_cylinder.setNormalDistanceWeight (0.1);
+	// maximal distance from point to cylinder surface to be identified as cylinder (1cm???)
+	seg_cylinder.setDistanceThreshold (0.02);
+	// limit size for radius
+	seg_cylinder.setRadiusLimits (0, 0.1);
+	// limit maximum computation time
+	seg_cylinder.setMaxIterations (1000);
+	
+	// Extract the found plane to remove the table
+	extract_planes.setNegative (true);
+
+	// Extract the found cylinder
+	extract_cylinders.setNegative (false);
 
 	// get verbosity for pcd output
 	nh_param.param<bool>("output_pcd", output_pcd, false);
@@ -124,28 +163,52 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 
 	// measure time to find biggest planar surface
 	duration(START);
-	seg.setInputCloud (cloud);
-	seg.segment (*inliers, *coefficients);
+	seg_plane.setInputCloud (cloud);
+	seg_plane.segment (*inliers_plane, *coefficients_plane);
 	duration(STOP);
-	
+
 	// measure time for overwriting filtered values
 	duration(START);
-	extract.setIndices (inliers);
-	extract.filterDirectly (cloud);
+	extract_planes.setInputCloud(cloud);
+	extract_planes.setIndices (inliers_plane);
+	extract_planes.setKeepOrganized(keep_organized);
+	extract_planes.filter (*cloud_no_plane);
+	duration(STOP);
+
+	// measure time for finding normals
+	duration(START);
+	// Estimate point normals
+	ne.setSearchMethod (tree);
+	ne.setInputCloud (cloud_no_plane);
+	ne.setKSearch (50);
+	ne.compute (*cloud_normals);
+	duration(STOP);
+
+	// measure time to find biggest cylinder
+	duration(START);
+	seg_cylinder.setInputCloud (cloud_no_plane);
+	seg_cylinder.setInputNormals (cloud_normals);
+	seg_cylinder.segment (*inliers_cylinder, *coefficients_cylinder);
+	duration(STOP);
+
+	// measure time for overwriting filtered values
+	duration(START);
+	extract_cylinders.setIndices (inliers_cylinder);
+	extract_cylinders.filterDirectly (cloud_no_plane);
 	duration(STOP);
 
 	// write pcd file if verbose = true & measure time
 	if (output_pcd)
 	{
 		duration(START);
-		writer.write<pcl::PointXYZ> ("plane_removed.pcd", *cloud, false);
+		writer.write<pcl::PointXYZ> ("plane_removed.pcd", *cloud_no_plane, false);
 		duration(STOP);
 	}
 	else
 		cout <<';';
 
 	// output number of points found on a surface
-	cout << inliers->indices.size() << endl;
+	cout << inliers_plane->indices.size() << ';' << inliers_cylinder->indices.size() << endl;
 
 }
 
