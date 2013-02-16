@@ -40,8 +40,71 @@ ros::Time start, stop;
 // Initialize Subscriber
 ros::Subscriber sub;
 
+// Initialize Publisher
+ros::Publisher pub;
+
+// Do you want to filter the depth for a specific depth range?
+bool filter_z;
+
 // Range variables for z coordinaten in pointcloud, can be changed using parameters
 double z_min, z_max;
+
+// Distance threshold for plane
+double threshold_plane;
+
+// Range for cylinder radius
+double radius_min, radius_max;
+
+// Distance threshold for cylinder
+double threshold_cylinder;
+
+// Construct point cloud to work with
+pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+
+// Construct point cloud after plane removal
+pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_no_plane (new pcl::PointCloud<pcl::PointXYZ>);
+
+// construct coefficients for plane
+pcl::ModelCoefficients::Ptr coefficients_plane (new pcl::ModelCoefficients);
+
+// construct coefficients for cylinder
+pcl::ModelCoefficients::Ptr coefficients_cylinder (new pcl::ModelCoefficients);
+
+// constructor for point found as part of planar surface
+pcl::PointIndices::Ptr inliers_plane (new pcl::PointIndices);
+
+// constructor for point found as part of cylinder
+pcl::PointIndices::Ptr inliers_cylinder (new pcl::PointIndices);
+
+// Create pass through point cloud for point filtering
+pcl::PassThrough<sensor_msgs::PointCloud2> pt(false);
+
+// Create ROS message for filtered point cloud
+sensor_msgs::PointCloud2 input_filtered;
+
+// Declare the segmentation object for planes
+pcl::SACSegmentation<pcl::PointXYZ> seg_plane;
+
+// Declare the segmentation object for cylinders
+pcl::SACSegmentationFromNormals<pcl::PointXYZ, pcl::Normal> seg_cylinder;
+
+// Declare the filtering object for planes
+pcl::ExtractIndices<pcl::PointXYZ> extract_planes;
+
+// Declare the filtering object for cylinders
+pcl::ExtractIndices<pcl::PointXYZ> extract_cylinders;
+
+// Declare variable for normal estimation
+pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
+
+// Create the cloud normals needed for cylinder segmentation
+pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
+
+// Create KdTree needed for normal estimation
+pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ> ());
+
+// Declare writer to write PCD files
+pcl::PCDWriter writer;
 
 // Callback function when subscribed to point cloud
 void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input);
