@@ -40,8 +40,11 @@ ros::Time start, stop;
 // Initialize Subscriber
 ros::Subscriber sub;
 
-// Initialize Publisher
-ros::Publisher pub;
+// Initialize Publisher for cylinder coefficients
+ros::Publisher pub_coeffs;
+
+// Initialize Publisher for points matched to cylinder
+ros::Publisher pub_cylinder;
 
 // Do you want to filter the depth for a specific depth range?
 bool filter_z;
@@ -58,11 +61,17 @@ double radius_min, radius_max;
 // Distance threshold for cylinder
 double threshold_cylinder;
 
+// Normal distance weight for the cylinder
+double normal_distance_weight_cylinder;
+
 // Construct point cloud to work with
 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
 
 // Construct point cloud after plane removal
 pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_no_plane (new pcl::PointCloud<pcl::PointXYZ>);
+
+// Construct point cloud of found cylinder
+pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cylinder (new pcl::PointCloud<pcl::PointXYZ>);
 
 // construct coefficients for plane
 pcl::ModelCoefficients::Ptr coefficients_plane (new pcl::ModelCoefficients);
@@ -81,6 +90,9 @@ pcl::PassThrough<sensor_msgs::PointCloud2> pt(false);
 
 // Create ROS message for filtered point cloud
 sensor_msgs::PointCloud2 input_filtered;
+
+// Create ROS message for cylinder point cloud output
+sensor_msgs::PointCloud2 output;
 
 // Declare the segmentation object for planes
 pcl::SACSegmentation<pcl::PointXYZ> seg_plane;
