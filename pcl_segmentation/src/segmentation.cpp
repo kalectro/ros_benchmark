@@ -6,15 +6,15 @@ int main (int argc, char** argv)
 {
 	ros::init (argc, argv, "object_recognition");
 	ros::NodeHandle nh;
-	ros::NodeHandle nh_param("~");
+	ros::NodeHandle nh_private("~");
 	// Create a ROS subscriber for the input point cloud
 	sub = nh.subscribe ("pointcloud", 1, cloud_cb);
 
 	// Create publisher to publish found coefficients
-	pub_coeffs = nh.advertise<pcl::ModelCoefficients> ("coefficients_cylinder", 1);
+	pub_coeffs = nh_private.advertise<pcl::ModelCoefficients> ("coefficients_cylinder", 1);
 
 	// Create publihser to publish points mapped to cylinder
-	pub_cylinder = nh.advertise<sensor_msgs::PointCloud2> ("pointcloud_cylinder", 1);
+	pub_cylinder = nh_private.advertise<sensor_msgs::PointCloud2> ("pointcloud_cylinder", 1);
 
 	// Write description for csv file	
 	cout << "All time values measured in milli seconds" << endl;
@@ -50,7 +50,7 @@ int main (int argc, char** argv)
 	extract_cylinders.setNegative (false);
 
 	// get verbosity for pcd output
-	nh_param.param<bool>("output_pcd", output_pcd, false);
+	nh_private.param<bool>("output_pcd", output_pcd, false);
 
 	// Spin
 	ros::spin ();
