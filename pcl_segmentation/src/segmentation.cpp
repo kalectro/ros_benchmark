@@ -18,7 +18,7 @@ int main (int argc, char** argv)
 
 	// Write description for csv file	
 	cout << "All time values measured in milli seconds" << endl;
-	cout << "filter_z;segment_plane;compute_normals;segment_cylinder;write_output;points;points_no_plane;point_on_cylinder" << endl;
+	cout << "downsample;filter_z;segment_plane;compute_normals;segment_cylinder;write_output;points;points_no_plane;point_on_cylinder" << endl;
 	
 	// set all available variables to a default value to make them visible to the user
 	nh.setParam("/ros_benchmark/pcl_segmentation/cylinder/radius_max", 0.1);
