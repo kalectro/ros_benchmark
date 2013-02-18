@@ -10,10 +10,12 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/passthrough.h>
+#include <pcl/filters/voxel_grid.h>
 
 using namespace std;
 
 string pcd_path, pcd_path_temp;
+double voxel_size;
 
 //Initialize Publisher
 ros::Publisher pub;
@@ -30,11 +32,17 @@ int main (int argc, char** argv)
 	// Create a ROS publisher for the output model coefficients
 	pub = nh.advertise<sensor_msgs::PointCloud2> ("pointcloud", 1);
 
-	// Create ROS message to publish the point cloud
-	sensor_msgs::PointCloud2 cloud;	
+	// Create a pointcloud to load the pcd file to
+	sensor_msgs::PointCloud2::Ptr cloud (new sensor_msgs::PointCloud2);	
+
+	// Create a pointcloud to store the downsampled point cloud
+	sensor_msgs::PointCloud2::Ptr cloud_voxeled (new sensor_msgs::PointCloud2);
 
 	// Set publishing frequency
 	ros::Rate loop_rate(1);
+
+	// make parameter visible to user
+	nh.setParam("/ros_benchmark/pcl_segmentation/voxel_size", 0.01);
 
 	while (ros::ok())
 	{
@@ -54,19 +62,28 @@ int main (int argc, char** argv)
 		{
 			pcd_path = pcd_path_temp;
 			// load the pcd into the point cloud
-			if (pcl::io::loadPCDFile (pcd_path, cloud) == -1) 
+			if (pcl::io::loadPCDFile (pcd_path, *cloud) == -1) 
 			{
 				PCL_ERROR ("Couldn't read file %s \n", pcd_path.c_str());
 				return (-1);
 			}
 		}
 
+		// get voxel size parameter
+		nh.getParam("/ros_benchmark/pcl_segmentation/voxel_size", voxel_size);
+
+		// Create the filtering object: downsample the dataset using a leaf size of 1cm
+		pcl::VoxelGrid<sensor_msgs::PointCloud2> sor;
+		sor.setInputCloud (cloud);
+		sor.setLeafSize (voxel_size,voxel_size,voxel_size);
+		sor.filter (*cloud_voxeled);
+
 		// Fill in the header
-		cloud.header.stamp = ros::Time::now();
-    	cloud.header.frame_id = "pointcloud_frame";
+		(*cloud).header.stamp = ros::Time::now();
+    	(*cloud).header.frame_id = "pointcloud_frame";
 
 		// Publish the model coefficients
-		pub.publish (cloud);
+		pub.publish (*cloud_voxeled);
 
 		// Spin
 		ros::spinOnce ();
