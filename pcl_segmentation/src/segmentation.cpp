@@ -207,6 +207,11 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 	cout << (*cloud_no_plane).size() << ';' ;
 	cout << (*cloud_cylinder).size() << endl;
 
+	// fill in header
+	output.header.stamp = ros::Time::now();
+	output.header.frame_id = "pointcloud_frame";
+
+	// publish points of cylinder and its coefficients
 	pub_coeffs.publish(coefficients_cylinder);
 	pub_cylinder.publish(output);
 }
