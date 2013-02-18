@@ -30,6 +30,7 @@ int main (int argc, char** argv)
 	nh.setParam("/ros_benchmark/pcl_segmentation/z_max_distance", 1.5);
 	nh.setParam("/ros_benchmark/pcl_segmentation/keep_organized", false);
 	nh.setParam("/ros_benchmark/pcl_segmentation/filter_z", true);
+	nh.setParam("/ros_benchmark/pcl_segmentation/voxel_size", 0.01);
 
 	// Set up SAC parameters for plane segmentation
 	seg_plane.setOptimizeCoefficients (true);
@@ -83,6 +84,7 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 	nh.getParam("/ros_benchmark/pcl_segmentation/z_max_distance", z_max);
 	nh.getParam("/ros_benchmark/pcl_segmentation/keep_organized", keep_organized);
 	nh.getParam("/ros_benchmark/pcl_segmentation/filter_z", filter_z);
+	nh.getParam("/ros_benchmark/pcl_segmentation/voxel_size", voxel_size);
 
 	// Construct point cloud to work with
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
@@ -114,42 +116,46 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 	// Create KdTree needed for normal estimation
 	pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ> ());
 
+	// Create a pointcloud to store the downsampled point cloud
+	sensor_msgs::PointCloud2::Ptr input_voxeled (new sensor_msgs::PointCloud2);
+
+
+	//
+	// measure time for downscaling the points
+	//
+	// Create the filtering object and downsample the dataset using the parameter leaf size
+	pcl::VoxelGrid<sensor_msgs::PointCloud2> sor;
+	sor.setInputCloud (input);
+	sor.setLeafSize (voxel_size,voxel_size,voxel_size);
+
+	// reset timer to measure only the filtering
+	duration(START);
+	sor.filter (*input_voxeled);
+	duration(STOP);
 
 
 	// 
 	// measure time for filtering the points
 	// 
 	// check if z values are supposed to be filtered (default: true)
-	if (filter_z)
+	if(z_max-z_min <= 0)
 	{
-		if(z_max-z_min <= 0)
-		{
-			ROS_WARN("Please make sure the parameter /segment/z_min_distance is smaller than /segment/z_max_distance");
-			return;
-		}
-
-		// set parameters for z axis filtering
-		pt.setInputCloud(input);
-		pt.setKeepOrganized(keep_organized);
-		pt.setFilterFieldName("z");
-		pt.setFilterLimits(z_min, z_max);
-
-		// reset timer to measure only the filtering
-		duration(START);
-		pt.filter(input_filtered);
-		duration(STOP);
-
-		// convert the message
-		pcl::fromROSMsg (input_filtered, *cloud);
+		ROS_WARN("Please make sure the parameter /segment/z_min_distance is smaller than /segment/z_max_distance");
+		return;
 	}
-	else
-	{
-		// do not measure time but also do not destroy csv
-		cout <<';';
-		
-		// convert the message
-		pcl::fromROSMsg (*input, *cloud);
-	}
+	// set parameters for z axis filtering
+	pt.setInputCloud(input_voxeled);
+	pt.setKeepOrganized(keep_organized);
+	pt.setFilterFieldName("z");
+	pt.setFilterLimits(z_min, z_max);
+
+	// reset timer to measure only the filtering
+	duration(START);
+	pt.filter(input_filtered);
+	duration(STOP);
+
+	// convert the message
+	pcl::fromROSMsg (input_filtered, *cloud);
 
 
 	// 

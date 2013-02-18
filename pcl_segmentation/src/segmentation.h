@@ -19,6 +19,7 @@
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/features/normal_3d.h>
+#include <pcl/filters/voxel_grid.h>
 
 // define enum for duration function
 enum { STOP, START };
@@ -64,8 +65,11 @@ double threshold_cylinder;
 // Normal distance weight for the cylinder
 double normal_distance_weight_cylinder;
 
+// Size of the downsampled voxel
+double voxel_size;
+
 // Create ROS message for filtered point cloud
-	sensor_msgs::PointCloud2 input_filtered;
+sensor_msgs::PointCloud2 input_filtered;
 
 // Create ROS message for cylinder point cloud output
 sensor_msgs::PointCloud2 output;
