@@ -18,7 +18,7 @@ int main (int argc, char** argv)
 
 	// Write description for csv file	
 	cout << "All time values measured in milli seconds" << endl;
-	cout << "filter_z;ROS2PC;segment_plane;remove_plane;compute_normals;segment_cylinder;extract_cylinder;write_output;PC2ROS;points;points_no_plane;point_on_cylinder" << endl;
+	cout << "filter_z;segment_plane;compute_normals;segment_cylinder;write_output;points;points_no_plane;point_on_cylinder" << endl;
 	
 	// set all available variables to a default value to make them visible to the user
 	nh.setParam("/ros_benchmark/pcl_segmentation/cylinder/radius_max", 0.1);
@@ -84,11 +84,42 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 	nh.getParam("/ros_benchmark/pcl_segmentation/keep_organized", keep_organized);
 	nh.getParam("/ros_benchmark/pcl_segmentation/filter_z", filter_z);
 
+	// Construct point cloud to work with
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+
+	// Construct point cloud after plane removal
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_no_plane (new pcl::PointCloud<pcl::PointXYZ>);
+
+	// Construct point cloud of found cylinder
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cylinder (new pcl::PointCloud<pcl::PointXYZ>);
+
+	// construct coefficients for plane
+	pcl::ModelCoefficients::Ptr coefficients_plane (new pcl::ModelCoefficients);
+
+	// construct coefficients for cylinder
+	pcl::ModelCoefficients::Ptr coefficients_cylinder (new pcl::ModelCoefficients);
+
+	// constructor for point found as part of planar surface
+	pcl::PointIndices::Ptr inliers_plane (new pcl::PointIndices);
+
+	// constructor for point found as part of cylinder
+	pcl::PointIndices::Ptr inliers_cylinder (new pcl::PointIndices);
+
+	// Create pass through point cloud for point filtering
+	pcl::PassThrough<sensor_msgs::PointCloud2> pt(false);
+
+	// Create the cloud normals needed for cylinder segmentation
+	pcl::PointCloud<pcl::Normal>::Ptr cloud_normals (new pcl::PointCloud<pcl::Normal>);
+
+	// Create KdTree needed for normal estimation
+	pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ> ());
+
+
 
 	// 
 	// measure time for filtering the points
 	// 
-	// check if parameters for limiting z value exists
+	// check if z values are supposed to be filtered (default: true)
 	if (filter_z)
 	{
 		if(z_max-z_min <= 0)
@@ -108,20 +139,16 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 		pt.filter(input_filtered);
 		duration(STOP);
 
-		// measure time for converting the message
-		duration(START);
+		// convert the message
 		pcl::fromROSMsg (input_filtered, *cloud);
-		duration(STOP);
 	}
 	else
 	{
 		// do not measure time but also do not destroy csv
 		cout <<';';
 		
-		// measure time for converting the message
-		duration(START);
+		// convert the message
 		pcl::fromROSMsg (*input, *cloud);
-		duration(STOP);
 	}
 
 
@@ -137,16 +164,14 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 
 
 	// 
-	// measure time for overwriting filtered values
+	// remove plane from point cloud
 	// 
 	extract_planes.setInputCloud(cloud);
 	extract_planes.setIndices (inliers_plane);
 	extract_planes.setKeepOrganized(keep_organized);
 	// limit size for radius in meters
 	seg_cylinder.setRadiusLimits (radius_min, radius_max);
-	duration(START);
 	extract_planes.filter (*cloud_no_plane);
-	duration(STOP);
 
 
 	// 
@@ -165,7 +190,7 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 	//
 	seg_cylinder.setInputCloud (cloud_no_plane);
 	seg_cylinder.setInputNormals (cloud_normals);
-	// maximal distance from point to cylinder surface to be identified as cylinder (1cm???)
+	// maximal distance from point to cylinder surface to be identified as cylinder
 	seg_cylinder.setDistanceThreshold (threshold_cylinder);
 	seg_cylinder.setNormalDistanceWeight (normal_distance_weight_cylinder);
 	duration(START);
@@ -174,14 +199,12 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 
 
 	// 
-	// measure time for overwriting filtered values
+	// overwrite filtered values
 	// 
 	extract_cylinders.setInputCloud (cloud_no_plane);
 	extract_cylinders.setIndices (inliers_cylinder);
 	extract_cylinders.setKeepOrganized(keep_organized);
-	duration(START);
 	extract_cylinders.filter (*cloud_cylinder);
-	duration(STOP);
 
 	//
 	// write pcd file if verbose = true & measure time
@@ -196,11 +219,9 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 		cout <<';';
 
 	//
-	// measure time to convert back to ROS message
+	// convert back to ROS message
 	//
-	duration(START);
 	pcl::toROSMsg(*cloud_cylinder, output);
-	duration(STOP);
 
 	// output number of points in point clouds
 	cout << (*cloud).size() << ';' ;
