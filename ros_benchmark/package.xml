@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-	<name>image_benchmark</name>
-	<version>0.0.1</version>
-	<description>Benchmark the throughput for different embedded systems</description>
+	<name>ros_benchmark</name>
+	<version>1.0.0</version>
+	<description>Benchmark the performance of different ROS packages</description>
 
 	<maintainer email="kai@kaifranke.com">Kai Franke</maintainer>
 	<license>BSD</license>
