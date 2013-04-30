@@ -4,9 +4,9 @@ project(feature_detection)
 find_package(catkin REQUIRED COMPONENTS cv_bridge roscpp rostime)
 
 catkin_package(
-  CATKIN_DEPENDS cv_bridge roscpp rostime
-  DEPENDS system_lib
 )
+
+include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_executable(feature_detection_node src/feature_detection.cpp)
 

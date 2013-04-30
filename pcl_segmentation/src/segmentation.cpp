@@ -1,4 +1,4 @@
-#include "segmentation.h"
+#include <segmentation.h>
 
 using namespace std;
 
@@ -21,6 +21,7 @@ int main (int argc, char** argv)
 	cout << "downsample;filter_z;segment_plane;compute_normals;segment_cylinder;write_output;points;points_no_plane;point_on_cylinder" << endl;
 	
 	// set all available variables to a default value to make them visible to the user
+	// TODO: change to dynamic reconfigure
 	nh.setParam("/ros_benchmark/pcl_segmentation/cylinder/radius_max", 0.1);
 	nh.setParam("/ros_benchmark/pcl_segmentation/cylinder/radius_min", 0.0);
 	nh.setParam("/ros_benchmark/pcl_segmentation/cylinder/threshold", 0.04);
@@ -62,12 +63,12 @@ void duration(bool identifier)
 	// 0 = STOP ; 1= START
 	// start timer if START
 	// stop and print timer if STOP
-	if(identifier)
+	if(identifier == START)
 		start = ros::Time::now();
 	else
 	{
 		stop = ros::Time::now();
-		cout << (stop.toNSec()-start.toNSec())/1000000 << ';' ;
+		cout << (stop-start).toNSec()/1000000 << ';' ;
 	}
 }	
 
@@ -230,9 +231,9 @@ void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
 	pcl::toROSMsg(*cloud_cylinder, output);
 
 	// output number of points in point clouds
-	cout << (*cloud).size() << ';' ;
-	cout << (*cloud_no_plane).size() << ';' ;
-	cout << (*cloud_cylinder).size() << endl;
+	cout << cloud->size() << ';' ;
+	cout << cloud_no_plane->size() << ';' ;
+	cout << cloud_cylinder->size() << endl;
 
 	// fill in header
 	output.header.stamp = ros::Time::now();

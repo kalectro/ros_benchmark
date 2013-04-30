@@ -4,9 +4,9 @@ project(image_transmission)
 find_package(catkin REQUIRED COMPONENTS cv_bridge image_transport std_msgs roscpp)
 
 catkin_package(
-  CATKIN_DEPENDS cv_bridge image_transport std_msgs roscpp
-  DEPENDS system_lib
 )
+
+include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_executable(image_transmitter src/image_transport_publisher.cpp)
 add_executable(image_subscriber src/image_transport_subscriber.cpp)

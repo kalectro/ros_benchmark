@@ -62,14 +62,14 @@ int main (int argc, char** argv)
 		}
 
 		// Fill in the header
-		(*cloud).header.stamp = ros::Time::now();
-    	(*cloud).header.frame_id = "pointcloud_frame";
+    cloud->header.stamp = ros::Time::now();
+    cloud->header.frame_id = "pointcloud_frame";
 
-		// Publish the model coefficients
-		pub.publish (*cloud);
+    // Publish the model coefficients
+    pub.publish (*cloud);
 
-		// Spin
-		ros::spinOnce ();
-		loop_rate.sleep();
+    // Spin
+    ros::spinOnce ();
+    loop_rate.sleep();
 	}
 }
