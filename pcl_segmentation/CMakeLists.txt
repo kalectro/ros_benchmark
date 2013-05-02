@@ -15,11 +15,13 @@ include_directories(include
 
 add_executable(pcl_segmentation src/segmentation.cpp)
 add_executable(create_pointcloud src/create_pointcloud.cpp)
+add_executable(combined src/combined.cpp)
 
 target_link_libraries(pcl_segmentation ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 target_link_libraries(create_pointcloud ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+target_link_libraries(combined ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
-install(TARGETS pcl_segmentation create_pointcloud 
+install(TARGETS pcl_segmentation create_pointcloud combined
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})

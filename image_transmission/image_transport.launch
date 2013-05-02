@@ -1,6 +1,0 @@
-<launch>
-	<node name="image_subscriber" pkg="image_transmission" type="image_subscriber" output="screen">
-	</node>
-	<node name="image_transmitter" pkg="image_transmission" type="image_transmitter" output="screen">
-	</node>
-</launch>

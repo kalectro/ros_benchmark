@@ -1,0 +1,21 @@
+<!-- launch file to benchmark 3D segmentation using PCL -->
+<launch>
+  <arg name="pcd_path" default="$(find pcl_segmentation)/pcds/benchmark.pcd" />
+  <arg name="output_pcd" default="false"/>
+  <arg name="voxel_size" default="0.01"/> 
+  
+  <node name="segmentation_benchmark" pkg="pcl_segmentation" type="combined" output="screen" >
+    <param name="output_pcd" value="$(arg output_pcd)"/>
+    <param name="pcd_path" value="$(arg pcd_path)"/>
+    <param name="cylinder/radius_max" value="0.1"/>
+    <param name="cylinder/radius_min" value="0.0"/>
+    <param name="cylinder/threshold" value="0.04"/>
+    <param name="cylinder/normal_distance_weight" value="0.1"/>
+    <param name="plane/threshold" value="0.02"/>
+    <param name="z_min_distance" value="0.5"/>
+    <param name="z_max_distance" value="1.5"/>
+    <param name="keep_organized" value="false"/>
+    <param name="voxel_size" value="$(arg voxel_size)"/>    
+  </node>
+  
+</launch>

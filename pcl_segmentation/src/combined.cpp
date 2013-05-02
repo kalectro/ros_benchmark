@@ -40,19 +40,21 @@
 
 using namespace std;
 
+static const string PCD_PATH = "src/ros_benchmark/pcl_segmentation/pcds/benchmark.pcd";
+
+void segment_cb ( const sensor_msgs::PointCloud2ConstPtr& input );
+
 int main (int argc, char** argv)
 {
 	ros::init (argc, argv, "benchmark_segmentation");
-	ros::NodeHandle nh;
-	ros::NodeHandle nh_private("~");
+	ros::NodeHandle nh("~");
 	// Create a ROS subscriber for the input point cloud
-	sub = nh.subscribe ("pointcloud", 1, cloud_cb);
 
 	// Create publisher to publish found coefficients
-	pub_coeffs = nh_private.advertise<pcl::ModelCoefficients> ("coefficients_cylinder", 1);
+	pub_coeffs = nh.advertise<pcl::ModelCoefficients> ("coefficients_cylinder", 1);
 
 	// Create publihser to publish points mapped to cylinder
-	pub_cylinder = nh_private.advertise<sensor_msgs::PointCloud2> ("pointcloud_cylinder", 1);
+	pub_cylinder = nh.advertise<sensor_msgs::PointCloud2> ("pointcloud_cylinder", 1);
 
 	// Write description for csv file	
 	cout << "All time values measured in milli seconds" << endl;
@@ -77,10 +79,47 @@ int main (int argc, char** argv)
 	extract_cylinders.setNegative (false);
 
 	// get verbosity for pcd output
-	nh_private.param<bool>("output_pcd", output_pcd, false);
+	nh.param("output_pcd", output_pcd, false);
+	
+	// get pcd path from parameter server
+	string pcd_path;
+	if (nh.getParam("pcd_path", pcd_path))
+	{
+		ROS_DEBUG("Found pcd path %s on server", pcd_path.c_str());
+	}
+	else // parameter for pcd path does not exist
+	{
+		pcd_path = PCD_PATH;
+		ROS_DEBUG("Found no pcd path on server, trying %s", pcd_path.c_str());
+	}
+	
+	// Create a pointcloud to load the pcd file to
+	sensor_msgs::PointCloud2::Ptr input (new sensor_msgs::PointCloud2);
+	
+	// load the pcd into the point cloud
+  if (pcl::io::loadPCDFile (pcd_path, *input) == -1) 
+  {
+    PCL_ERROR ("Couldn't read file %s \n", pcd_path.c_str());
+    return (-1);
+  }
 
-	// Spin
-	ros::spin ();
+	while( ros::ok() )
+	{
+	 	// get all parameters from parameter server
+	  nh.param("cylinder/radius_max", radius_max, 0.1);
+	  nh.param("cylinder/radius_min", radius_min, 0.0);
+	  nh.param("cylinder/threshold", threshold_cylinder, 0.04);
+	  nh.param("cylinder/normal_distance_weight", normal_distance_weight_cylinder, 0.1);
+	  nh.param("plane/threshold", threshold_plane, 0.02);
+	  nh.param("z_min_distance", z_min, 0.5);
+	  nh.param("z_max_distance", z_max, 1.5);
+	  nh.param("keep_organized", keep_organized, false);
+	  nh.param("voxel_size", voxel_size, 0.01);
+	
+    segment_cb( input );
+    
+	  ros::spinOnce ();
+  }
 }
 
 void duration(bool identifier)
@@ -97,21 +136,8 @@ void duration(bool identifier)
 	}
 }	
 
-void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
+void segment_cb ( const sensor_msgs::PointCloud2ConstPtr& input )
 {
-	ros:: NodeHandle nh;
-	// get all parameters from parameter server
-	nh.param("/ros_benchmark/pcl_segmentation/cylinder/radius_max", radius_max, 0.1);
-	nh.param("/ros_benchmark/pcl_segmentation/cylinder/radius_min", radius_min, 0.0);
-	nh.param("/ros_benchmark/pcl_segmentation/cylinder/threshold", threshold_cylinder, 0.04);
-	nh.param("/ros_benchmark/pcl_segmentation/cylinder/normal_distance/weight", normal_distance_weight_cylinder, 0.1);
-	nh.param("/ros_benchmark/pcl_segmentation/plane/threshold", threshold_plane, 0.02);
-	nh.param("/ros_benchmark/pcl_segmentation/z_min_distance", z_min, 0.5);
-	nh.param("/ros_benchmark/pcl_segmentation/z_max_distance", z_max, 1.5);
-	nh.param("/ros_benchmark/pcl_segmentation/keep_organized", keep_organized, false);
-	nh.param("/ros_benchmark/pcl_segmentation/filter_z", filter_z, true);
-	nh.param("/ros_benchmark/pcl_segmentation/voxel_size", voxel_size, 0.01);
-
 	// Construct point cloud to work with
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
 
