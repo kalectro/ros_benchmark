@@ -1,0 +1,7 @@
+<launch>
+  <arg name="compression" default="raw" />
+  
+	<node name="image_subscriber" pkg="image_transmission" type="image_subscriber" output="screen">
+  	<param name="image_transport" value="$(arg compression)" />
+	</node>
+</launch>

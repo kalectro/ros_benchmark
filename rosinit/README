@@ -1,0 +1,14 @@
+This benchmark will test the time needed for three basic ROS tasks and write the output into a csv file
+
+To execute run 
+
+./benchmark.sh 10
+
+from this folder. The only argument is the number of repetitions.
+For every repetition a new ROS node is started and the times are recorded in micro seconds for the execution of the following three commands
+
+ros::init(argc, argv, "rosinit_benchmark");
+
+ros::NodeHandle nh
+
+nh.getParam("/rosinit_benchmark/testparam", dump);

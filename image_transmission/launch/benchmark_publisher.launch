@@ -1,0 +1,7 @@
+<launch>
+  <arg name="image_path" default="$(find image_transmission)/images/VGA1.jpg" />
+  
+	<node name="image_transmitter" pkg="image_transmission" type="image_transmitter" output="screen">
+	  <param name="image_path" value="$(arg image_path)" />
+	</node>
+</launch>
