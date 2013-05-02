@@ -1,0 +1,7 @@
+This benchmark will run through multiple feature descriptor combinations and output a csv file with the results.
+
+To execute run 
+
+./benchmark.sh images/VGA1.jpg 10
+
+from this folder. The first argument is the path to the image to detect features from, the second argument is the number of repetitions for each descriptor combination.
